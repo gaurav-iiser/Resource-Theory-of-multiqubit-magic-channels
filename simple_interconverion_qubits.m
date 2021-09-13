@@ -2,38 +2,28 @@
 %%%%%%%%%%%%%%%% Interconversion among qubits%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%% r and s correspond to two Bloch vectors of two quantum states with
+%%% components (r1,r2,r3) and (s1,s2,s3), respectively.
 %%% Define (r1,r2,r3), (s1,s2,s3) such that these vectors belong to Bloch
 %%% sphere and r1 <= r2, r3, and s1 <= s2,s3.
+%%% The for loop with index k has been given to check with K random states.
+%%% By default, K = 1, for known r and s.
 
 clear all
 format short
 t=0;
 c=0;
 b=0;
-p = 0.83
-for k = 1:100
-    p1= rand()*(1/3);
-    p2= rand()*(2/3);
-    p3 = 1 - p1 - p2;
+K = 1
+for k = 1:K
 
-    v = sort([sqrt(p1),sqrt(p2),sqrt(p3)]);
-
-    r1 = 0;%v(1);%1/sqrt(6);
-    r2 = 1/sqrt(2);%v(3);%1/sqrt(6);
-    r3 = 1/sqrt(2);%v(2);%sqrt(2)/sqrt(3);
-   
-
-    p1= rand()*(1/3);
-    p2= rand()*(2/3);
-    p3 = 1 - p1 - p2;
-
-    v = sort([sqrt(p1),sqrt(p2),sqrt(p3)]);
-    %p=rand();
+    r1 = 0;
+    r2 = 1/sqrt(2);
+    r3 = 1/sqrt(2);
     
-    s1 = 0;%p*v(1);%0.9/sqrt(3);
-    s2 = 0;%p*v(3);%1/2;%sqrt(5)/sqrt(6); 
-    s3 = 1;%p*v(2);%(p*sqrt(2))/sqrt(3);%0.9/sqrt(3);%sqrt(5)/sqrt(6);
-
+    s1 = 0;%1/sqrt(3);
+    s2 = 0;%1/sqrt(3);
+    s3 = 1;%1/sqrt(3);
 
     phi(:,1) = [1;0;0];
     phi(:,2) = [0;1;0];
@@ -49,9 +39,6 @@ for k = 1:100
     rho(:,8) = phi(:,2);
     rho(:,9) = [-r3;r2;r1];
     rho(:,10)= [r3;r2;-r1];
-    
-    %rho(:,5) = phi(:,2);
-    %rho(:,6) = phi(:,3);
 
     sigma(:,1) = [s1;s2;s3]; %%% We're considering sigma(:,1) to be in the X-subset of the %%%positive octant %%%
     sigma(:,2) = [s2;s3;s1];
@@ -59,15 +46,6 @@ for k = 1:100
     sigma(:,4) = [-s1;s3;s2];
     sigma(:,5) = phi(:,2);
     sigma(:,6) = phi(:,3);
-
-    %{ 
-    %% old %%%
-    [mid_vec1, dec1] =  perp_vec(rho(:,1),rho(:,2),rho(:,6));
-    [mid_vec2, dec2] =  perp_vec(rho(:,1),rho(:,2),rho(:,3));
-    [mid_vec3, dec3] =  perp_vec(rho(:,1),rho(:,4),rho(:,6));
-    [mid_vec4, dec4] =  perp_vec(rho(:,1),rho(:,3),rho(:,5));
-    [mid_vec5, dec5] =  perp_vec(rho(:,1),rho(:,4),rho(:,5));
-    %}
     
     [mid_vec1, dec1] =  perp_vec(rho(:,1),rho(:,6),rho(:,7));
     [mid_vec2, dec2] =  perp_vec(rho(:,1),rho(:,7),rho(:,5));
@@ -105,19 +83,20 @@ for k = 1:100
                %disp('bottom');
                b=b+1;
             else
-                fprintf('%i not done \n', k);
+                fprintf('At step number %i computation returned. Hence, conversion not possible. \n', k);
+                return
             end
         end
     end
 end
-t*100/k
-c*100/k
-b*100/k
+sum = t + c+ b;
+if sum == K
+    disp('Conversion possible')
+end
 
 
 
-
-
+%{
 function checkpos = is_pos(v,rho,phi)
     res1 = dot(v,rho(:,1))
     res2 = dot(v,rho(:,2))
@@ -133,6 +112,7 @@ function checkpos = is_pos(v,rho,phi)
         checkpos = 0;
     end
 end
+%}
 
 function [mid_vec, decider] = perp_vec(r,p,q)
     a = (r(3) - p(3))*(r(2) - q(2)) - (r(2)-p(2))*(r(3)-q(3));
